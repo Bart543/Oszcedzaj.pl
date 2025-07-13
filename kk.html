@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oszczędzanie - Uniwersalny cel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(to right, #c1dfc4, #deecdd);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2d6a4f;
+      margin-bottom: 0.2rem;
+    }
+
+    #quote {
+      text-align: center;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+      font-weight: 600;
+      color: #2d6a4f;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #2d6a4f;
+      border-radius: 10px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      appearance: none;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .inputs-wrapper {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.6rem;
+      background-color: #2d6a4f;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #225c3c;
+    }
+
+    .progress-container {
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 20px;
+      margin: 1rem 0;
+    }
+
+    .progress-bar {
+      background-color: #52b788;
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+      padding: 0.5rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 10px;
+    }
+
+    li button {
+      background: none;
+      color: #d00000;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .summary, .counter, .status {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    .counter {
+      font-size: 1.5rem;
+      color: #40916c;
+    }
+
+    .info {
+      font-size: 0.75rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Oszczędzanie</h1>
+
+    <label for="goalInput">Kwota celu (zł):</label>
+    <input type="number" id="goalInput" min="0.01" step="0.01" placeholder="np. 1000" />
+
+    <label for="goalDescInput">Na co oszczędzasz?</label>
+    <input type="text" id="goalDescInput" placeholder="np. nowy telefon" />
+
+    <div id="goalSummary" style="margin: 1rem 0; text-align:center; font-weight:600; color:#2d6a4f;">
+      Wpisz kwotę i cel oszczędzania powyżej, aby rozpocząć.
+    </div>
+
+    <div class="inputs-wrapper">
+      <input type="number" id="quantityInput" min="0" value="0" placeholder="Ilość" title="Ilość" disabled />
+      <input type="number" id="amountInput" min="0.01" step="0.01" placeholder="Kwota" title="Kwota (zł)" disabled />
+    </div>
+    <button id="addButton" disabled>Dodaj</button>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <ul id="list"></ul>
+
+    <div class="summary">Suma:</div>
+    <div class="counter" id="totalDisplay">0.00 zł</div>
+    <div class="status" id="status"></div>
+
+    <div id="quote">„Zacznij dzisiaj, nie jutro.”</div>
+  </div>
+
+  <script>
+    let goal = 0;
+    let goalDesc = '';
+    const quantityInput = document.getElementById('quantityInput');
+    const amountInput = document.getElementById('amountInput');
+    const addButton = document.getElementById('addButton');
+    const list = document.getElementById('list');
+    const totalDisplay = document.getElementById('totalDisplay');
+    const status = document.getElementById('status');
+    const progressBar = document.getElementById('progressBar');
+    const quote = document.getElementById('quote');
+    const goalInput = document.getElementById('goalInput');
+    const goalDescInput = document.getElementById('goalDescInput');
+    const goalSummary = document.getElementById('goalSummary');
+
+    const quotes = [
+      "„Zacznij dzisiaj, nie jutro.”",
+      "„Każda złotówka się liczy.”",
+      "„Oszczędzanie to wolność.”",
+      "„Dyscyplina to klucz do sukcesu.”"
+    ];
+
+    // Przechowujemy wpisy w localStorage pod kluczem zależnym od celu, by można było mieć różne cele
+    let entries = [];
+
+    function formatDate(date) {
+      const m = date.getMinutes().toString().padStart(2, '0');
+      const h = date.getHours().toString().padStart(2, '0');
+      const d = date.getDate().toString().padStart(2, '0');
+      const mo = (date.getMonth() + 1).toString().padStart(2, '0');
+      const y = date.getFullYear();
+      return `${h}:${m} ${d}.${mo}.${y}`;
+    }
+
+    function saveAndUpdate() {
+      if (goal > 0 && goalDesc) {
+        localStorage.setItem(`entries_${goal}_${goalDesc}`, JSON.stringify(entries));
+      }
+      updateView();
+    }
+
+    function loadEntries() {
+      if (goal > 0 && goalDesc) {
+        const data = localStorage.getItem(`entries_${goal}_${goalDesc}`);
+        entries = data ? JSON.parse(data) : [];
+      } else {
+        entries = [];
+      }
+    }
+
+    function updateView() {
+      list.innerHTML = '';
+
+      if (goal > 0 && goalDesc) {
+        goalSummary.textContent = `Cel: ${goalDesc} — ${goal.toFixed(2)} zł`;
+      } else {
+        goalSummary.textContent = 'Wpisz kwotę i cel oszczędzania powyżej, aby rozpocząć.';
+      }
+
+      let sum = 0;
+
+      for (const entry of entries) {
+        sum += entry.amount * entry.quantity;
+
+        const li = document.createElement('li');
+
+        const infoDiv = document.createElement('div');
+        infoDiv.innerHTML = `<strong>${entry.quantity} x ${entry.amount.toFixed(2)} zł</strong>`;
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'info';
+        dateDiv.textContent = `Dodano: ${entry.date}`;
+        infoDiv.appendChild(dateDiv);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '✕';
+        removeBtn.title = 'Usuń wpis';
+        removeBtn.onclick = () => {
+          entries = entries.filter(e => e !== entry);
+          saveAndUpdate();
+        };
+
+        li.appendChild(infoDiv);
+        li.appendChild(removeBtn);
+        list.appendChild(li);
+      }
+
+      totalDisplay.textContent = `${sum.toFixed(2)} zł`;
+
+      const progress = goal > 0 ? Math.min((sum / goal) * 100, 100) : 0;
+      progressBar.style.width = progress + '%';
+
+      if (goal > 0) {
+        if (sum >= goal) {
+          status.textContent = 'Gratulacje! Cel osiągnięty! 🎉';
+        } else {
+          status.textContent = `Do celu brakuje: ${(goal - sum).toFixed(2)} zł`;
+        }
+      } else {
+        status.textContent = '';
+      }
+
+      // Aktywuj/Dezaktywuj pola dodawania wpisów
+      const inputsEnabled = goal > 0 && goalDesc.length > 0;
+      quantityInput.disabled = !inputsEnabled;
+      amountInput.disabled = !inputsEnabled;
+      addButton.disabled = !inputsEnabled;
+    }
+
+    function addEntry() {
+      const quantity = parseInt(quantityInput.value, 10);
+      const amount = parseFloat(amountInput.value);
+
+      if (!quantity || quantity < 1) {
+        alert('Podaj poprawną ilość (min. 1)');
+        quantityInput.focus();
+        return;
+      }
+      if (!amount || amount <= 0) {
+        alert('Podaj poprawną kwotę (> 0)');
+        amountInput.focus();
+        return;
+      }
+
+      const newEntry = {
+        quantity,
+        amount,
+        date: formatDate(new Date())
+      };
+
+      entries.push(newEntry);
+      saveAndUpdate();
+
+      quantityInput.value = 0;
+      amountInput.value = '';
+      quantityInput.focus();
+
+      quote.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+    }
+
+    // Zmiana celu oszczędzania
+    function onGoalChange() {
+      const newGoal = parseFloat(goalInput.value);
+      const newGoalDesc = goalDescInput.value.trim();
+
+      if (newGoal > 0 && newGoalDesc.length > 0) {
+        // Zmiana celu - załaduj nowe dane
+        goal = newGoal;
+        goalDesc = newGoalDesc;
+        loadEntries();
+      } else {
+        goal = 0;
+        goalDesc = '';
+        entries = [];
+      }
+
+      updateView();
+    }
+
+    goalInput.addEventListener('input', onGoalChange);
+    goalDescInput.addEventListener('input', onGoalChange);
+
+    addButton.addEventListener('click', addEntry);
+
+    quantityInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        addEntry();
+        event.preventDefault();
+      }
+    });
+
+    amountInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        addEntry();
+        event.preventDefault();
+      }
+    });
+
+    updateView();
+  </script>
+</body>
+</html>
