@@ -1,0 +1,1 @@
+# Oszcedzaj.pl
